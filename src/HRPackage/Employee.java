@@ -20,6 +20,12 @@ public abstract class Employee {
 
     private double _earnings;
 
+    //blank place holder constructor. 
+   
+    public Employee () {
+        
+    }
+    
     /**
      * constructor for a hired employee.
      *

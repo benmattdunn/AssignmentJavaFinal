@@ -18,6 +18,9 @@ public class EmployeesIdentity {
     private Employee[] empArrayReturn;
     private DefaultTableModel empTable; 
     
+    public EmployeesIdentity () {
+        
+    }
     
     public EmployeesIdentity (Employee[] empList, DefaultTableModel empTable) {
         this.empArrayReturn = empList;

@@ -3,8 +3,8 @@
 package DB;
 
 import HRPackage.*;
+import IO.IO;
 import Session.Session;
-import static com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Int;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Vector;
@@ -15,6 +15,7 @@ import javax.swing.table.DefaultTableModel;
 // class that store connection variables
 public class DBConnection {
 
+    IO errorWriter = new IO();
     Statement stat = null;
     Connection conn = null;
     ResultSet rs = null;
@@ -44,6 +45,7 @@ public class DBConnection {
                         "WHERE UserName ='"+userName+"' " +
                         "And PassWord = '"+PassWord +"' " + 
                         "LIMIT 1");
+                
                 // pull a login session from the DB. Pull and unpack
                 if(rs != null) {
                     // create customer object, we need to move it to another location,
@@ -64,9 +66,11 @@ public class DBConnection {
                             tableResults.getValueAt(0, 2).toString(),
                             Boolean.getBoolean(tableResults.getValueAt(0, 3).toString()));
                     //userLogged = new Customer(rs.getString("login"),rs.getInt("custID"),rs.getBoolean("admin"));
+                    //throw new Exception("FUCK");
                     } 
                     catch (Exception e) {
                         session = new Session ("Something has gone wrong with creating the user session!");
+                        errorWriter.appendToFile("Something has gone wrong with creating the user session!");
                     }
                     
                                         
@@ -125,25 +129,105 @@ public class DBConnection {
             
     } 
     
+    
+    
+    
+    public String turnIntDataFieldsIntoSQLDate (int year, int month, int day) {
+                //last chance error validation to prevent rouge inputs into DB, 
+        // this code is an absolute LAST restort and hopefully should 
+        // never be triggered. 
+        String sMonth = "";
+        String sDay = ""; 
+        if (year < 1900) {
+            year += 1900;
+        }
+        if (year < 0) {
+            System.out.println("DATE CONVERSION ERROR ON YEAR!");
+            return ""; 
+        }
+        if (month < 1 || month > 12) {
+            System.out.println("DATE CONVERSION ERROR ON MONTH!");
+            return ""; 
+        }
+        if (day < 1 || day > 31) {
+            System.out.println("DATE CONVERSION ERROR ON DAY!");
+            return ""; 
+        }
+        if (month < 10 ){
+            sMonth = "0"+month;
+        } else {
+            sMonth = String.valueOf(month);
+        }
+        if (day < 10 ){
+            sDay = "0"+day;
+        } else {
+            sDay = String.valueOf(day);
+        }
+        
+        System.out.println("CONVERTED DATE: " + ""+year+"-"+sMonth+"-"+sDay);
+        
+        
+        return ""+year+"-"+sMonth+"-"+sDay;
+    }
+    
 
+    // prepares an insert into the employee table for base values. while no 
+    //field is really required. But they are validated by the GUI
+    public String prepInsertIntoEmployee (int EmpType, String firstName, 
+            String lastName, String Gender, int Sin, String Birthdate, String HireDate,
+            String position, String department, String status, String addresss,
+            String phonenumber,
+            double earnings,
+            double payRate,
+            double hours,
+            double salary,
+            double sales,
+            double comRate,
+            double totalSalary) {
+         //INSERT INTO  gc200325005.Employee (EMPType, firstName, lastName, Gender, sin, Birthdate) VALUES (1, 'John', 'Smith', 'Male', 111111111, '11-04-05');
+        //String backHalf
+        String inserts ="(EMPType, firstName, lastName, Gender, sin, Birthdate, HireDate, position, department, status, address, phone,"
+                + "earnings, hours , payrate , salary , sales , commissionrate , totalSalary) VALUES ("+
+                EmpType + ",'"+firstName+ "','" + lastName + "','" + Gender + "',"+ Sin+ ",'" + Birthdate + "','" + HireDate  +"','"+position+"','"
+                + department + "','" + status +"','"+ addresss + "','"+ phonenumber + "',"+ earnings + ","+ payRate + ","+hours + ","+
+                salary + ","+ sales + ","+ comRate + ","+ totalSalary +
+                ");"; 
+                
+                //1, 'John', 'Smith', 'Male', 111111111, '11-04-05');
+                return inserts;
+                
+                //TABLE NAME: gc200325005.EMPLOYEE 
+                //STATEMENT: (EMPType, firstName, lastName, Gender, sin, Birthdate) VALUES (0'ben','dunn','male',123456789,'');
+    }
 
 
     // insert new row to DB
-    public void insert(String TableName) {
+    public void insertSQLDataBase(String TableName, String insertStatementValues) {
         try {
+            System.out.println("\n \n \n REACHED INSERT STATEMENT ");
+            
+            
             conn = DriverManager.getConnection(DB_URL, DB_Username, DB_Password);
             stat = conn.createStatement();
-
-            
-            
-
+            //INSERT INTO  gc200325005.Employee (EMPType, firstName, lastName, Gender, sin, Birthdate) VALUES (1, 'John', 'Smith', 'Male', 111111111, '11-04-05');
+            String insertStatement = "INSERT INTO " + TableName +" "+ insertStatementValues;
+            System.out.println("Insert Statement: " + insertStatement);
+            stat.execute(insertStatement);
         } catch (SQLException err) {
-
+            System.out.println("ERROR ON INSERT: \n"
+                    + "TABLE NAME: " + TableName + "\n" +
+                     "STATEMENT: " + insertStatementValues + "\n" +
+                     "MESSAGE: " + err.getMessage()
+                    
+                    );
+            errorWriter.appendToFile("ERROR ON INSERT: " +
+                     "TABLE NAME: " + TableName +
+                     "STATEMENT: " + insertStatementValues +
+                     "MESSAGE: " + err.getMessage());
         }
     }
 
-    
-    
+ 
 
 
     // update row at DB
@@ -158,7 +242,8 @@ public class DBConnection {
             stat.executeUpdate(updateString);
             
         }catch(Exception ex) {
-            
+            System.out.println("Update Statement ERR on: " +TableName+ "" );
+            errorWriter.appendToFile("Update Statement ERR on: " +TableName);
         }
         
     }
@@ -172,7 +257,8 @@ public class DBConnection {
      * @throws SQLException 
      */
     public void deleteSQLDataBase(String TableName, String IDType, int ID) throws SQLException {
-
+                
+        System.out.println("\n\n\n\n\n Reached Delete Statement!");
 		
                
                 conn = DriverManager.getConnection(DB_URL, DB_Username, DB_Password);
@@ -190,13 +276,10 @@ public class DBConnection {
                      stat.executeUpdate(deleteStatement); 
 			
 		} catch (SQLException e) {
+                    System.out.println("Error on delete:" + e.getMessage());
+                    errorWriter.appendToFile("Error on delete:" + e.getMessage());
 
-
-
-		} finally {
-
-
-		}
+		} 
 
 	}
 
@@ -242,23 +325,23 @@ public class DBConnection {
                              int empID =Integer.parseInt(empTable.getValueAt(k, 0).toString());//want this to throw an error
                             try {
                                 FN = preventNull(empTable.getValueAt(k, 2).toString(),0);
-                            } catch(Exception e){};try {
+                            } catch(Exception e){System.out.println(e.getMessage());};try {
                                 LN = preventNull(empTable.getValueAt(k, 3).toString(),0);
-                            } catch(Exception e){};try {
+                            } catch(Exception e){System.out.println(e.getMessage());};try {
                                 Add = preventNull(empTable.getValueAt(k, 12).toString(),0);
-                            } catch(Exception e){};try {
-                                PhnN = preventNull(empTable.getValueAt(k, 8).toString(),0);
-                            } catch(Exception e){};try {
+                            } catch(Exception e){System.out.println(e.getMessage());};try {
+                                PhnN = preventNull(empTable.getValueAt(k, 11).toString(),0);
+                            } catch(Exception e){System.out.println(e.getMessage());};try {
                                 Gen =  preventNull(empTable.getValueAt(k, 5).toString(),0);
-                            } catch(Exception e){};try {
+                            } catch(Exception e){System.out.println(e.getMessage());};try {
                             Pos =  preventNull(empTable.getValueAt(k, 8).toString(),0);
-                            } catch(Exception e){};try {
+                            } catch(Exception e){System.out.println(e.getMessage());};try {
                                 Dept =  preventNull(empTable.getValueAt(k, 6).toString(),0);
-                            } catch(Exception e){};try {
+                            } catch(Exception e){System.out.println(e.getMessage());};try {
                                 sin = Integer.parseInt( preventNull(empTable.getValueAt(k, 7).toString(),0));
-                            } catch(Exception e){};try {
+                            } catch(Exception e){System.out.println(e.getMessage());};try {
                                 earns = Double.parseDouble( preventNull(empTable.getValueAt(k, 13).toString(),0));
-                            } catch(Exception e){};
+                            } catch(Exception e){System.out.println(e.getMessage());};
                              // dates
                            
                             try {
@@ -272,7 +355,7 @@ public class DBConnection {
                                 HD = this.pullDate( preventNull(empTable.getValueAt(k, 9).toString(),1), 3);
                             } catch(Exception e){};
                              System.out.println("Reached here without error");
-                             
+                            System.out.println("DRAW EMP DATA: " + " FIRSTNAME: "+  FN + " LASTNAME: " + LN + " ADDRESS: " +  Add + " PHONE: "+ PhnN + " GENDER: " + Gen + " DEPT: " + Dept + " SIN: " + sin +" EARNS: "+  earns);
                             
                             //comm rate
                  if (Integer.parseInt(empTable.getValueAt(k, 1).toString()) == 0) {
@@ -280,6 +363,7 @@ public class DBConnection {
                     try {commissionRate = Double.parseDouble( preventNull(empTable.getValueAt(k, 13).toString(),18)); } catch(Exception e){};
                         
                     CommissionEmployee tempEmp = new CommissionEmployee(empID, FN,LN,Add,PhnN,Gen,Pos,Dept,sin,earns,BY,BM,BD,HY,HM,HD,commissionRate);
+                    tempEmp.toString();
                     tempEmp.setTotalSales(sales); //as it was restricted in the orginal class
                     empTempArryList.add(tempEmp);
                 }
@@ -364,7 +448,7 @@ public class DBConnection {
      * @return
      * @throws SQLException 
      */
-    public static DefaultTableModel buildTBModel(ResultSet rs) throws SQLException {
+    public DefaultTableModel buildTBModel(ResultSet rs) throws SQLException {
         ResultSetMetaData metaData = rs.getMetaData();
         
                 Vector<String> columnNames = new Vector<String>();
@@ -399,6 +483,7 @@ public class DBConnection {
             }
             tableData.add(rowVector);
             } catch (Exception e) {
+                errorWriter.appendToFile("Error on DB pull: " + e.getMessage());
             //System.out.println("Hey This is where the fuck up is");
             System.out.println(e.getMessage());
         }

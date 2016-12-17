@@ -3,18 +3,25 @@ package GUI;
 import DB.DBConnection;
 import DB.EmployeesIdentity;
 import HRPackage.Employee;
+import IO.IO;
 import Session.Session;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel; 
 
 public class GUI extends JFrame {
 
+    IO errorWriter = new IO();
     // panels
     private JPanel greetingPanel, mainPanel = new JPanel(), employeeTab,
             employeePanel, employeeSearchPanel, hourlyEmpTab, salaryEmpTab,
@@ -55,7 +62,8 @@ public class GUI extends JFrame {
             
 
     // text boxes for employee tab
-    private JTextField firstNameTxt = new JTextField(15),
+    private JTextField 
+            firstNameTxt = new JTextField(15),
             lastNameTxt = new JTextField(15),
             addressTxt = new JTextField(15),
             phoneNumberTxt = new JTextField(15),
@@ -138,18 +146,18 @@ public class GUI extends JFrame {
     
     //Search areas based on user input
     private JTextArea 
-            searchEmpIDTextBox = new JTextArea(3, 20),//emptype is dropdown
-            searchFirstNameTextBox = new JTextArea(3, 20), 
-            searchLastNameTextBox= new JTextArea(3, 20), 
-            searchPositionTextBox= new JTextArea(3, 20),
-            searchGenderTextBox= new JTextArea(3, 20), 
-            searchDepartmentTextBox= new JTextArea(3, 20), 
-            searchSinTextBox= new JTextArea(3, 20),
-            searchbirthDayTextBox= new JTextArea(3, 20), 
-            searchHireDateTextBox= new JTextArea(3, 20), 
-            searchStatusTextBox= new JTextArea(3, 20),
-            searchPhoneTextBox= new JTextArea(3, 20), 
-            searchAddressTextBox= new JTextArea(3, 20),
+            searchEmpIDTextBox = new JTextArea(1, 20),//emptype is dropdown
+            searchFirstNameTextBox = new JTextArea(1, 20), 
+            searchLastNameTextBox= new JTextArea(1, 20), 
+            searchPositionTextBox= new JTextArea(1, 20),
+            searchGenderTextBox= new JTextArea(1, 20), 
+            searchDepartmentTextBox= new JTextArea(1, 20), 
+            searchSinTextBox= new JTextArea(1, 20),
+            searchbirthDayTextBox= new JTextArea(1, 20), 
+            searchHireDateTextBox= new JTextArea(1, 20), 
+            searchStatusTextBox= new JTextArea(1, 20),
+            searchPhoneTextBox= new JTextArea(1, 20), 
+            searchAddressTextBox= new JTextArea(1, 20),
     
             //text fields for editing an employee. 
             searchEDITEmpIDTextBox = new JTextArea(1, 20),//emptype is dropdown
@@ -189,6 +197,7 @@ public class GUI extends JFrame {
         };
     };;
     
+    private ListSelectionModel searchEmployeeListSelectionModel;
     private Employee[] employeeStorage;
     private Employee selectedEmployee; 
     JScrollPane searchResultsScrollTable; //accessor. 
@@ -210,6 +219,9 @@ public class GUI extends JFrame {
     {"Commission Employee",
     "Hourly Employee",
     "Salary Employee"} );
+    
+    
+    private int empCreateGetIndexofTabPane;
     
     //buttons
     private JButton searchEmployees; //activates the search for the database. 
@@ -243,9 +255,9 @@ public class GUI extends JFrame {
         this.buildSearchPanel();
 
         // add tabs
-        mainTabs.addTab("Employee", null, employeeTab, "Employee");
+        mainTabs.addTab("Create an Employee", null, employeeTab, "Employee");
         mainTabs.addTab("Products", null, productTab, "Products");
-        mainTabs.addTab("Search Employees", null, this.searchMainPanel, "Search Employees");
+        mainTabs.addTab("Search and Edit Employees", null, this.searchMainPanel, "Search Employees");
 
         // add subpanels to main panel
         mainPanel.setLayout(new BorderLayout());
@@ -359,8 +371,13 @@ public class GUI extends JFrame {
         // </editor-fold>
         
         //empJTableListSelectionListener
-        
+        searchEmpEditButton.setEnabled(false);
         searchResultsTable.setModel(this.searchResultsDefaultTableModel);
+            searchEmployeeListSelectionModel = searchResultsTable.getSelectionModel();
+        searchEmployeeListSelectionModel.addListSelectionListener(new empJTableListSelectionListener());
+        searchResultsTable.setSelectionModel(searchEmployeeListSelectionModel);
+                
+                
         //this.searchResultsTable = new JTable(this.searchResultsDefaultTableModel);
         this.searchResultsTable.setSize(300, 800);
         
@@ -373,6 +390,7 @@ public class GUI extends JFrame {
             }
             catch (Exception e ) {
                 System.out.println(e.getMessage());
+                errorWriter.appendToFile("Packing issue: " + e.getMessage());
                 //errorWriter.writeError(e);
             }
             
@@ -485,7 +503,7 @@ public class GUI extends JFrame {
         empPositionlbl = new JLabel("Position");
         empGenderlbl = new JLabel("Gender");
         empDepartmentlbl = new JLabel("Deparment");
-        empStatuslbl =  new JLabel("First Name");
+        empStatuslbl =  new JLabel("Status");
         
         
 
@@ -498,22 +516,22 @@ public class GUI extends JFrame {
         employeePanel.add(addressTxt);
         employeePanel.add(phoneNumberLbl);
         employeePanel.add(phoneNumberTxt);
-        employeePanel.add(yearLbl);
+        employeePanel.add(yearLbl); 
         employeePanel.add(yearTxt);
         employeePanel.add(monthLbl);
         employeePanel.add(monthTxt);
         employeePanel.add(dayLbl);
         employeePanel.add(dayTxt);
         //added code new inputs
-        employeePanel.add(emphireDateYearlbl);
-        employeePanel.add(emphireDateYearTxt);
-        employeePanel.add(empHireDateMonthlbl);
-        employeePanel.add(empHireDateMonthTxt);
-        employeePanel.add(empHireDateDaylbl);
-        employeePanel.add(empHireDateDayTxt);
-        employeePanel.add(empSinlbl);
-        employeePanel.add(empSinTxt);
-        employeePanel.add(empPositionlbl);
+        employeePanel.add(emphireDateYearlbl); // needs handle
+        employeePanel.add(emphireDateYearTxt); // needs handle
+        employeePanel.add(empHireDateMonthlbl); // needs handle
+        employeePanel.add(empHireDateMonthTxt); // needs handle
+        employeePanel.add(empHireDateDaylbl); // needs handle
+        employeePanel.add(empHireDateDayTxt); // needs handle
+        employeePanel.add(empSinlbl); // needs handle
+        employeePanel.add(empSinTxt); // needs handle
+        employeePanel.add(empPositionlbl); 
         employeePanel.add(empPositionTxt);
         employeePanel.add(empGenderlbl);
         employeePanel.add(empGenderTxt);
@@ -532,6 +550,21 @@ public class GUI extends JFrame {
         buildHourlyEmployeePanel();
         buildSalaryEmployeePanel();
         buildCommissionEmployeePanel();
+ 
+        //controls what type of employee will be created for the idenity 
+        // to the DB by listening to changes to the emp tab. 
+        ChangeListener changeListener = new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+                employeeTypeTab = (JTabbedPane) changeEvent.getSource();
+                empCreateGetIndexofTabPane = employeeTypeTab.getSelectedIndex();
+                System.out.println("Emp creation Tab changed to: " + 
+                        employeeTypeTab.getTitleAt(empCreateGetIndexofTabPane)+
+                        " \n Index of: " + empCreateGetIndexofTabPane);
+        }
+        };
+        employeeTypeTab.addChangeListener(changeListener); //adds the 
+
+        
         // add panels to tabs
         employeeTypeTab.addTab("Hourly Emp", null, hourlyEmpTab, "Hourly Emp");
         employeeTypeTab.addTab("Salary Emp", null, salaryEmpTab, "Salary Emp");
@@ -551,6 +584,7 @@ public class GUI extends JFrame {
         hourRateLbl = new JLabel("Hour Rate");
         // create button
         createHourlyEmployeeBtn = new JButton("Create Hourly Employee");
+        createHourlyEmployeeBtn.addActionListener(new NewEmployeeButtonLisenter()); //ExitButtonListener
         // add everything to panel
         hourlyEmpTab.add(hoursLbl);
         hourlyEmpTab.add(hoursTxt);
@@ -559,6 +593,8 @@ public class GUI extends JFrame {
         hourlyEmpTab.add(createHourlyEmployeeBtn);
 
     }
+    
+    
 
     private void buildSalaryEmployeePanel() {
         // create new panel
@@ -571,6 +607,7 @@ public class GUI extends JFrame {
         weeklySalaryLbl = new JLabel("Weekly salary");
         // create button
         createSalaryEmployeeBtn = new JButton("Create Salary Employee");
+        createSalaryEmployeeBtn.addActionListener(new NewEmployeeButtonLisenter());
         // add everything to panel
         salaryEmpTab.add(weeklySalaryLbl);
         salaryEmpTab.add(weeklySalaryTxt);
@@ -590,6 +627,8 @@ public class GUI extends JFrame {
         baseSalaryLbl = new JLabel("Base salary");
         // create button
         createCommEmployeeBtn = new JButton("Create Commission Employee");
+        createCommEmployeeBtn.addActionListener(new NewEmployeeButtonLisenter());
+        
         // add everything to panel
         commissionEmpTab.add(salesLbl);
         commissionEmpTab.add(salesTxt);
@@ -600,6 +639,8 @@ public class GUI extends JFrame {
         commissionEmpTab.add(createCommEmployeeBtn);
     }
 
+    //REMOVED for a better search panel. 
+    //builds the employee search panel
     private void buildEmployeeSearchPanel() {
         // create new panel
         employeeSearchPanel = new JPanel();
@@ -634,6 +675,7 @@ public class GUI extends JFrame {
         productTab.add(productSearchPanel, BorderLayout.SOUTH);
     }
 
+    //builds the product panel
     private void buildProductPanel() {
         // create new panel
         productPanel = new JPanel();
@@ -653,6 +695,7 @@ public class GUI extends JFrame {
 
     }
 
+    //builds the manufacture panel. 
     private void buildManufacturerPanel() {
         // create new panel
         manufacturerPanel = new JPanel();
@@ -676,6 +719,7 @@ public class GUI extends JFrame {
 
     }
 
+    //builds the product search panel
     private void buildProductSearchPanel() {
         // create new panel
         productSearchPanel = new JPanel();
@@ -705,6 +749,10 @@ public class GUI extends JFrame {
         exitPanel.add(exitBtn);
     }
 
+    
+    
+    
+    
     /**
      * Sets up either a search criteria of values (1), or sections (2) 
      * @param setupFlag
@@ -873,6 +921,7 @@ public class GUI extends JFrame {
             
         }} catch (IndexOutOfBoundsException e) {
             //errorWriter.writeError(e);
+            errorWriter.appendToFile("index of the legnth was out of bounds" + e.getMessage());
             System.out.println("index of the legnth was out of bounds");
         }
         
@@ -886,7 +935,12 @@ public class GUI extends JFrame {
     }
     
     
-
+    
+    
+    /**
+     * deletes the instance of the employee at the index selected
+     * by the user. 
+     */
     private void deleteEmployee() {
         int Delete = this.employeeStorage[this.searchResultsTable.getSelectedRow()].getEmpId();
         //this.employeeStorage[0];
@@ -894,17 +948,48 @@ public class GUI extends JFrame {
         try {
             conn.deleteSQLDataBase("Employee","EmpID", Delete);
             this.searchEmployees.doClick(); //force and update through an event click
+            
         } catch(Exception e)
         {
-            
+            errorWriter.appendToFile("Delete Error" + e.getMessage());
             System.out.println("Delete Error" + e.getMessage());
         };
+        this.searchEmployees.doClick();//and do it again to prevent errors. 
     }    
     
+    /**
+     * Isolated return for values. 
+     * @return 
+     */
+    private EmployeesIdentity searchEmployee() {
+        EmployeesIdentity empIden;
+        try {
+                    //System.out.println("Hey I did fucking shit!");
+                    DBConnection Conn = new DBConnection(); 
+                    empIden = Conn.getEmployeeInformation(searchSetup(createEmpSearchCriteria(2), 
+                            createEmpSearchCriteria(1), "gc200325005.Employee"));
+
+                    searchResultsTable.setModel(empIden.getEmpTable());
+                    employeeStorage = empIden.getEmpArrayReturn();
+                    System.out.println("Size of Current employeeStorage array: "+ employeeStorage.length);
+
+            }catch (Exception e) {
+                //errorWriter.writeError(e);
+                errorWriter.appendToFile("ERROR: " + e.getMessage());
+                System.out.println("Error!");
+                System.out.println(e.getMessage());
+                empIden = new EmployeesIdentity(); //return empty empIdenity. 
+                
+            }
+        return empIden;
+    }
+    /**
+     * Updates the values in the held object
+     */
     private void updateEmployee() {
         try {
         selectedEmployee.setSinNumber(Integer.getInteger(searchEDITSinTextBox.getText()));
-        } catch (Exception e) {}
+        } catch (Exception e) {} //does not need to be thrown, but required for code
         selectedEmployee.setFirstName(searchEDITFirstNameTextBox.getText());
         selectedEmployee.setLastName(searchEDITLastNameTextBox.getText());
         selectedEmployee.setPosition(searchEDITPositionTextBox.getText());
@@ -912,31 +997,57 @@ public class GUI extends JFrame {
         selectedEmployee.setStatus(searchEDITStatusTextBox.getText());
         selectedEmployee.setPhoneNumber(searchEDITPhoneTextBox.getText());
         selectedEmployee.setAddress(searchEDITAddressTextBox.getText());
-        UpdateEmployee();
+        DBUpdateEmployee();
     }
-    
-    public void UpdateEmployee() {
+    /**
+     * Simply way of updating the DB, puts the stored values into the array for update.
+     */
+    public void DBUpdateEmployee() {
         DBConnection conn = new DBConnection();
-        conn.updateSQLDataBase("Employee", "firstName", selectedEmployee.getFirstName(), "EmpID", selectedEmployee.getEmpId());
-        conn.updateSQLDataBase("Employee", "lastName", selectedEmployee.getLastName(), "EmpID", selectedEmployee.getEmpId());
-        conn.updateSQLDataBase("Employee", "position", selectedEmployee.getPosition(), "EmpID", selectedEmployee.getEmpId());
-        conn.updateSQLDataBase("Employee", "gender", selectedEmployee.getGender(), "EmpID", selectedEmployee.getEmpId());
-        conn.updateSQLDataBase("Employee", "status", selectedEmployee.getStatus(), "EmpID", selectedEmployee.getEmpId());
-        conn.updateSQLDataBase("Employee", "Phone", selectedEmployee.getPhoneNumber(), "EmpID", selectedEmployee.getEmpId());
-        conn.updateSQLDataBase("Employee", "addess", selectedEmployee.getAddress(), "EmpID", selectedEmployee.getEmpId());
+        //
+        
+        
+        conn.updateSQLDataBase("Employee", "firstName", "'"+selectedEmployee.getFirstName()+"'", "EmpID", selectedEmployee.getEmpId());
+        conn.updateSQLDataBase("Employee", "lastName",  "'"+selectedEmployee.getLastName()+"'", "EmpID", selectedEmployee.getEmpId());
+        conn.updateSQLDataBase("Employee", "position",  "'"+selectedEmployee.getPosition()+"'", "EmpID", selectedEmployee.getEmpId());
+        conn.updateSQLDataBase("Employee", "gender",  "'"+selectedEmployee.getGender()+"'", "EmpID", selectedEmployee.getEmpId());
+        conn.updateSQLDataBase("Employee", "status",  "'"+selectedEmployee.getStatus()+"'", "EmpID", selectedEmployee.getEmpId());
+        conn.updateSQLDataBase("Employee", "Phone",  "'"+selectedEmployee.getPhoneNumber()+"'", "EmpID", selectedEmployee.getEmpId());
+        conn.updateSQLDataBase("Employee", "address",  "'"+selectedEmployee.getAddress()+"'", "EmpID", selectedEmployee.getEmpId());
         this.searchEmployeeBtn.doClick();
     }
     
-
     
+    private class NewEmployeeButtonLisenter implements ActionListener 
+        {
+
+        @Override
+        public void actionPerformed(ActionEvent event) 
+        {
+            createEmployeeAndSubmitToDB();
+
+        }
+    }
+
+
+    /***
+     * Listens for changes in the selection of the rows of the Jtable and allows
+     * the editing of the information.
+     */
     private class empJTableListSelectionListener implements ListSelectionListener {
         @Override
         public void valueChanged(ListSelectionEvent event) {
             System.out.println("This is Done: " + searchResultsTable.getSelectedRow());
             selectedEmployee = employeeStorage[searchResultsTable.getSelectedRow()];
+            System.out.println(selectedEmployee.getStatus());
+            searchEmpEditButton.setEnabled(true);
+
         }
     }
     
+    /**
+     * for space saving on the main pannel, calls a pip u 
+     */
     private class SelectForEditListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
@@ -944,7 +1055,9 @@ public class GUI extends JFrame {
              editWindow.setVisible(true);
         }
     }
-    
+    /**
+     * Creates a temp pop up for editing, non blocking. 
+     */
     private class EditWindow extends JFrame {
         
         public EditWindow() {
@@ -965,6 +1078,9 @@ public class GUI extends JFrame {
         }
     }
     
+    /**
+     * listens for calls on the update button. 
+     */
     private class UpdateButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
@@ -972,13 +1088,22 @@ public class GUI extends JFrame {
         }
     } 
     
+    /**
+     * listens for call on the delete button. 
+     */
     private class DeleteButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
-            deleteEmployee();
+           if (JOptionPane.showConfirmDialog(null, "Are you sure?", "Exit?", JOptionPane.YES_NO_OPTION) == 0) {
+                deleteEmployee();
+           }
         }
     }
     
+    
+    
+    
+
    
 
     /**
@@ -990,8 +1115,6 @@ public class GUI extends JFrame {
          */
 
         private EmployeesIdentity empIden;
-
-
  //action listener's table
         @Override
         public void actionPerformed(ActionEvent event) {
@@ -1011,7 +1134,9 @@ public class GUI extends JFrame {
                 //errorWriter.writeError(e);
                 System.out.println("Error!");
                 System.out.println(e.getMessage());
+                errorWriter.appendToFile("Error! " + e.getMessage());
             }
+            searchEmpEditButton.setEnabled(false);
             
         }
         /**
@@ -1020,9 +1145,7 @@ public class GUI extends JFrame {
          */
         public DefaultTableModel returnMyTable() {
             return this.empIden.getEmpTable();
-        }
-        
-        
+        }        
     }
 
     // event handlers
@@ -1036,8 +1159,217 @@ public class GUI extends JFrame {
                 System.exit(0);
             }
         }
-        
-        
     }
+    
 
+        //validates date inputes 
+        public boolean checkValidDate (String Date) 
+        {
+            //Error on date Conversion: Unparseable date: "1988-10-10"
+
+            try {
+                DateFormat df = new SimpleDateFormat("YYYY-MM-DD");
+                df.setLenient(true);
+                df.parse(Date);
+                return false;
+            }
+            catch (ParseException e) {
+                System.out.println("Error on date Conversion: " + e.getMessage());
+                errorWriter.appendToFile("Error on date Conversion: " + e.getMessage());
+                return true;
+            }
+        }
+        //as the C# try parse int method. 
+        private boolean tryParseInt(String value) 
+        {
+            try {  
+                Integer.parseInt(value);  
+            return true;  
+        
+            } catch (NumberFormatException e) {  
+            return false;  
+            }  
+        }
+                //as the C# try parse int method. 
+        private boolean tryDoubleInt(String value) 
+        {
+            try {  
+                Double.parseDouble(value);  
+            return true;  
+        
+            } catch (NumberFormatException e) {
+                
+            return false;  
+            }  
+        }
+
+        
+        //validates for date format, not if the date is 
+        //valid for DB insert however (different format)
+        //"dd-MM-yyyy" is format. 
+        public boolean validateCreateEmployeeRequiredFieldsFilled()
+        {
+         if (
+                    firstNameTxt.getText().equals("") ||  
+                    lastNameTxt.getText().equals("") ||
+                    empGenderTxt.getText().equals("") ||
+                    empSinTxt.getText().equals("") ||
+                    yearTxt.getText().equals("") ||
+                    monthTxt.getText().equals("") ||
+                    dayTxt.getText().equals("") ||
+                    this.empPositionTxt.getText().equals("")
+                 )
+                    
+            {
+                JOptionPane.showMessageDialog(null,"You Cannot Submit to the database a new employee "
+                        + "without hte folloing fields, First Name, Last Name, Gender, Sin Number, "
+                        + "year of birth, month of birth, day of birth, and position","Submission Error",JOptionPane.WARNING_MESSAGE);
+                return false; 
+            }
+         
+         //field validations that are REQUIRED for all types. 
+         if (this.checkValidDate(yearTxt.getText()+"-"+monthTxt.getText()+"-"+dayTxt.getText())){
+             JOptionPane.showMessageDialog(null,"You must enter a valid date for employee birth format is YYYY, MM, DD in the seperate fields","Submission Error",JOptionPane.WARNING_MESSAGE);
+                return false; 
+         }
+         if (empSinTxt.getText().length()!=9 && !tryParseInt(empSinTxt.getText())) {
+             JOptionPane.showMessageDialog(null,"Sin number must be 9 digits long with no spaces, and contain no letter characters","Submission Error",JOptionPane.WARNING_MESSAGE);
+                return false; 
+         }
+         //
+         if (this.checkValidDate(emphireDateYearTxt.getText()+"-"+empHireDateMonthTxt.getText()+"-"+empHireDateDayTxt.getText())){
+             JOptionPane.showMessageDialog(null,"You must enter a valid date for employee hire format is YYYY, MM, DD in the seperate fields, keep in mind this is not a required "
+                     + "field","Submission Error",JOptionPane.WARNING_MESSAGE);
+                return false; 
+         }
+
+         return true; 
+         
+        }
+        
+
+        /*
+        validates the input for the create employee. 
+        */
+        public boolean validateInputTabe (int Tab) {
+            if (empCreateGetIndexofTabPane == 0)
+            {
+                if(     this.tryDoubleInt(this.hourRateTxt.getText())
+                        &&
+                        this.tryDoubleInt(this.hoursTxt.getText())) {
+                    return true;
+                    
+                }
+                else {
+                    JOptionPane.showConfirmDialog(null, "One of the fields in the pay field is entered incorrectly?", "OK", JOptionPane.OK_OPTION);
+                    return false;
+                }
+            } else if (empCreateGetIndexofTabPane == 1)
+            {
+                if(     this.tryDoubleInt(this.baseSalaryTxt.getText())){
+                    return true;
+                    
+                }
+                else {
+                    JOptionPane.showConfirmDialog(null, "One of the fields in the pay field is entered incorrectly?", "OK", JOptionPane.OK_OPTION);
+                    return false;
+                }
+            } else if (empCreateGetIndexofTabPane == 2)
+            {
+                if(     this.tryDoubleInt(this.salesTxt.getText())
+                        &&
+                        this.tryDoubleInt(this.commissionRateTxt.getText())
+                        &&
+                        this.tryDoubleInt(this.baseSalaryTxt.getText())
+                        ) {
+                    return true;
+                }
+                else {
+                    JOptionPane.showConfirmDialog(null, "One of the fields in the pay field is entered incorrectly?", "OK", JOptionPane.OK_OPTION);
+                    return false;
+                }
+            }
+            JOptionPane.showConfirmDialog(null, "Did you fill in the require fields?", "OK", JOptionPane.OK_OPTION);            return false ;
+            
+        }
+        
+        /**
+         * Creates a new employee and submits it to the DB. 
+         */
+        public void createEmployeeAndSubmitToDB(){
+            
+            
+            
+            if ((validateCreateEmployeeRequiredFieldsFilled())&&(validateInputTabe(empCreateGetIndexofTabPane))) {
+            
+                double PayRate = 0;
+                double hours = 0;
+                double salary = 0;
+                double sales = 0;
+                double comrate = 0;
+                double totalSalary = 0; //odd name, but used for naming variables
+                
+                if (empCreateGetIndexofTabPane==0) {
+                    hours = Double.parseDouble(hourRateTxt.getText());
+                    PayRate = Double.parseDouble(this.hourRateTxt.getText());
+                } else if (empCreateGetIndexofTabPane==1) {
+                    salary = Double.parseDouble(this.baseSalaryTxt.getText());
+                }else if (empCreateGetIndexofTabPane==2) {
+                    sales = Double.parseDouble(this.salesTxt.getText());
+                    comrate = Double.parseDouble(this.commissionRateTxt.getText());
+                    totalSalary = Double.parseDouble(this.baseSalaryTxt.getText());
+                }
+                
+                        
+                EmployeesIdentity empIden;
+                DBConnection conn = new DBConnection();
+                //prepInsertIntoEmployee
+                //turnIntDataFieldsIntoSQLData
+                //insertSQLDataBase
+                conn.insertSQLDataBase("gc200325005.Employee", conn.prepInsertIntoEmployee(
+                        this.empCreateGetIndexofTabPane, 
+                        firstNameTxt.getText(), 
+                        lastNameTxt.getText(), 
+                        empGenderTxt.getText(), 
+                        Integer.parseInt(empSinTxt.getText()), 
+                        conn.turnIntDataFieldsIntoSQLDate(
+                                Integer.parseInt(yearTxt.getText()), 
+                                Integer.parseInt(monthTxt.getText()),
+                                Integer.parseInt(dayTxt.getText())),
+                        conn.turnIntDataFieldsIntoSQLDate(
+                                Integer.parseInt(this.emphireDateYearTxt.getText()), 
+                                Integer.parseInt(this.empHireDateMonthTxt.getText()),
+                                Integer.parseInt(this.empHireDateDayTxt.getText())),
+                        this.empPositionTxt.getText(),
+                        this.empDepartmentTxt.getText(),
+                        this.empStatusTxt.getText(),
+                        this.addressTxt.getText(),
+                        this.phoneNumberTxt.getText(),
+                       0.00,
+                       hours,
+                       PayRate,
+                       salary,
+                       sales,
+                       comrate,
+                       totalSalary
+                )
+                      
+                     
+
+                );
+                conn.getEmployeeInformation("SELECT * FROM gc200325005.Employee");
+                empIden = conn.getEmployeeInformation(searchSetup(createEmpSearchCriteria(2), 
+                            createEmpSearchCriteria(1), "gc200325005.Employee"));
+
+                    searchResultsTable.setModel(empIden.getEmpTable());
+                    employeeStorage = empIden.getEmpArrayReturn();
+                    System.out.println("Size of Current employeeStorage array: "+ employeeStorage.length);
+            
+            }
+        }
+        
+
+
+
+    
 }

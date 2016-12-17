@@ -2,11 +2,14 @@ package HRPackage;
 
 import HRPackage.PayStyles.PayCommission;
 
+
 public class CommissionEmployee extends Employee implements PayCommission {
 
     
     private double _sales, _commissionRate;
 
+    
+    public CommissionEmployee() {} 
     
     /**
      * constructor for a new hire employee

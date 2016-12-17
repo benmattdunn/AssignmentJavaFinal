@@ -7,6 +7,13 @@ public class HourlyEmployee extends Employee implements PayHourly {
     private double _hoursWorkedThisPeriod, _totalHoursWorked, _payRate;
 
     /**
+     * Blank place holder constructor. 
+     */
+    public HourlyEmployee() {
+        
+    }
+    
+    /**
      * setup method for an hourly employee that has been hired.
      *
      * @param empID

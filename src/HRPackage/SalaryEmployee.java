@@ -6,6 +6,10 @@ public class SalaryEmployee extends Employee implements PaySalary {
 
     private double _salary;
 
+    public SalaryEmployee() {
+        
+    }
+    
     /**
      * constructor for a salary hired employee.
      *
